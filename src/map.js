@@ -87,7 +87,8 @@
             'centered',
             'extentset',
             'resized',
-            'drawn'
+            'drawn',
+            'tilepositioned'
         ]);
 
         // set up handlers last so that all required attributes/functions are in place if needed

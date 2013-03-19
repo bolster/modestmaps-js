@@ -98,7 +98,20 @@ var MM = com.modestmaps = {
         };
     })(this); // use this for node.js global
 
-    MM.moveElement = function(el, point) {
+    MM.initializeMoveListener = function(el, callback){
+        var transitions = {'transition': 'transitionend', 'OTransition': 'oTransitionEnd','MozTransition': 'transitionend','WebkitTransition': 'webkitTransitionEnd'};
+        if(!callback)
+            callback = function() {};
+        var t;
+        var checkEl = document.createElement('fakeelement');
+        for(t in transitions){
+            if (checkEl.style[t] !== undefined){
+                el.addEventListener(transitions[t], callback, false);
+            }
+        }
+    };
+
+    MM.moveElement = function(el, point, callback) {
         if (MM.transformProperty) {
             // Optimize for identity transforms, where you don't actually
             // need to change this element's string. Browsers can optimize for
@@ -110,6 +123,7 @@ var MM = com.modestmaps = {
             if (el[MM.transformProperty] !== ms) {
                 el.style[MM.transformProperty] =
                     el[MM.transformProperty] = ms;
+                    MM.initializeMoveListener(el, callback);
             }
         } else {
             el.style.left = point.x + 'px';
@@ -1868,6 +1882,10 @@ var MM = com.modestmaps = {
             this.positionTile(element);
         },
 
+        tilePositioned: function(e) {
+            this.map.dispatchCallback("tilepositioned", e);
+        },
+
         positionTile: function(tile) {
             // position this tile (avoids a full draw() call):
             var theCoord = this.map.coordinate.zoomTo(tile.coord.zoom);
@@ -1883,6 +1901,11 @@ var MM = com.modestmaps = {
 
             var scale = Math.pow(2, this.map.coordinate.zoom - tile.coord.zoom);
 
+            var _this = this;
+            var callback = function(e) {
+                _this.tilePositioned(e);
+            };
+
             MM.moveElement(tile, {
                 x: Math.round((this.map.dimensions.x/2) +
                     (tile.coord.column - theCoord.column) * this.map.tileSize.x),
@@ -1892,7 +1915,7 @@ var MM = com.modestmaps = {
                 // TODO: pass only scale or only w/h
                 width: this.map.tileSize.x,
                 height: this.map.tileSize.y
-            });
+            }, callback);
 
             // add tile to its level
             var theLevel = this.levels[tile.coord.zoom];
@@ -2089,7 +2112,8 @@ var MM = com.modestmaps = {
             'centered',
             'extentset',
             'resized',
-            'drawn'
+            'drawn',
+            'tilepositioned'
         ]);
 
         // set up handlers last so that all required attributes/functions are in place if needed

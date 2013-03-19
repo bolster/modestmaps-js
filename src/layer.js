@@ -302,6 +302,10 @@
             this.positionTile(element);
         },
 
+        tilePositioned: function(e) {
+            this.map.dispatchCallback("tilepositioned", e);
+        },
+
         positionTile: function(tile) {
             // position this tile (avoids a full draw() call):
             var theCoord = this.map.coordinate.zoomTo(tile.coord.zoom);
@@ -317,6 +321,11 @@
 
             var scale = Math.pow(2, this.map.coordinate.zoom - tile.coord.zoom);
 
+            var _this = this;
+            var callback = function(e) {
+                _this.tilePositioned(e);
+            };
+
             MM.moveElement(tile, {
                 x: Math.round((this.map.dimensions.x/2) +
                     (tile.coord.column - theCoord.column) * this.map.tileSize.x),
@@ -326,7 +335,7 @@
                 // TODO: pass only scale or only w/h
                 width: this.map.tileSize.x,
                 height: this.map.tileSize.y
-            });
+            }, callback);
 
             // add tile to its level
             var theLevel = this.levels[tile.coord.zoom];

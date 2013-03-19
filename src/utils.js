@@ -68,7 +68,20 @@
         };
     })(this); // use this for node.js global
 
-    MM.moveElement = function(el, point) {
+    MM.initializeMoveListener = function(el, callback){
+        var transitions = {'transition': 'transitionend', 'OTransition': 'oTransitionEnd','MozTransition': 'transitionend','WebkitTransition': 'webkitTransitionEnd'};
+        if(!callback)
+            callback = function() {};
+        var t;
+        var checkEl = document.createElement('fakeelement');
+        for(t in transitions){
+            if (checkEl.style[t] !== undefined){
+                el.addEventListener(transitions[t], callback, false);
+            }
+        }
+    };
+
+    MM.moveElement = function(el, point, callback) {
         if (MM.transformProperty) {
             // Optimize for identity transforms, where you don't actually
             // need to change this element's string. Browsers can optimize for
@@ -80,6 +93,7 @@
             if (el[MM.transformProperty] !== ms) {
                 el.style[MM.transformProperty] =
                     el[MM.transformProperty] = ms;
+                    MM.initializeMoveListener(el, callback);
             }
         } else {
             el.style.left = point.x + 'px';
